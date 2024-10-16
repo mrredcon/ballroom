@@ -4,7 +4,6 @@ from discord import app_commands
 from discord.ext import commands
 
 from models.attribute import Attribute
-from models.skill import Skill
 import models.stats
 from models.character import Character
 
@@ -68,7 +67,8 @@ class CharacterCog(commands.GroupCog, name='character', description='Character c
         embed = discord.Embed(title=character.name, description=character.description, color=member.color)
 
         for attribute in Attribute.__members__.values():
-            embed.add_field(name=models.stats.get_pretty_name(attribute), value=self.get_skills_sheet_by_attribute(character, attribute))
+            embed.add_field(name=f'{models.stats.get_pretty_name(attribute)}: {character.get_attribute(attribute)}',
+                            value=self.get_skills_sheet_by_attribute(character, attribute))
 
         return embed
 
@@ -103,6 +103,15 @@ class CharacterCog(commands.GroupCog, name='character', description='Character c
 
         await interaction.response.send_message(f"Characters: {character_names}.")
 
+    @app_commands.command(name="setattribute", description="Set the value of one of your character's attributes.")
+    @app_commands.describe(attribute_name="The name of the attribute to edit.", value="An integer to set the attribute's value to.")
+    async def set_attribute(self, interaction: discord.Interaction, attribute_name: str, value: int) -> None:
+        try:
+            charactersvc.set_attribute(interaction.user.id, attribute_name, value)
+            await interaction.response.send_message("Attribute successfully set.")
+        except CharacterException as e:
+            await interaction.response.send_message(f"An error occurred while setting the attribute: {e}")
+
     @app_commands.command(name="setskill", description="Set the value of one of your character's skills.")
     @app_commands.describe(skill_name="The name of the skill to edit.", value="An integer to set the skill's value to.")
     async def set_skill(self, interaction: discord.Interaction, skill_name: str, value: int) -> None:
@@ -112,8 +121,12 @@ class CharacterCog(commands.GroupCog, name='character', description='Character c
         except CharacterException as e:
             await interaction.response.send_message(f"An error occurred while setting the skill: {e}")
 
+    @set_attribute.autocomplete("attribute_name")
+    async def attribute_name_autocomplete(self, _: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        options = models.stats.attribute_pretty_names.values()
+        return [app_commands.Choice(name=option, value=option) for option in options if option.casefold().startswith(current.casefold())][:25]
+
     @set_skill.autocomplete("skill_name")
     async def skill_name_autocomplete(self, _: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        #options = Skill.__members__.keys()
         options = models.stats.skill_pretty_names.values()
         return [app_commands.Choice(name=option, value=option) for option in options if option.casefold().startswith(current.casefold())][:25]

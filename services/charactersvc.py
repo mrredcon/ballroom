@@ -44,20 +44,30 @@ def activate_character(user_id: int, name: str) -> bool:
 def find_character_by_name(character_name: str) -> Optional[Character]:
     cursor = db.conn.cursor()
     cursor.execute('SELECT * FROM character WHERE name = ?', (character_name,))
-    return Character('Unimplemented')
+    return Character(-1, -1, 'Unimplemented', '', '', 0, 0)
 
 def get_active_character_by_user_id(user_id: int) -> Optional[Character]:
     cursor = db.conn.cursor()
     cursor.execute('SELECT character_id FROM active_character WHERE user_id = ?', (user_id,))
-    output = cursor.fetchone()
-    if output is None:
+    char_id = cursor.fetchone()
+    if char_id is None:
         return None
-    cursor.execute('SELECT id, user_id, name, description, image_url, health, morale FROM character WHERE id = ?', (output[0],))
-    output = cursor.fetchone()
-    #for row in output:
-    #    print(row)
+    cursor.execute('SELECT id, user_id, name, description, image_url, health, morale FROM character WHERE id = ?', (char_id[0],))
+    db_character = cursor.fetchone()
+    character = Character(*db_character)
+
+    cursor.execute('SELECT attribute_name, value FROM attribute WHERE character_id = ?', (char_id[0],))
+    db_attributes = cursor.fetchall()
+    for db_attribute in db_attributes:
+        character.set_attribute(models.stats.get_attribute_by_name(db_attribute[0]), db_attribute[1])
+
+    cursor.execute('SELECT skill_name, value FROM skill WHERE character_id = ?', (char_id[0],))
+    db_skills = cursor.fetchall()
+    for db_skill in db_skills:
+        character.set_skill(models.stats.get_skill_by_name(db_skill[0]), db_skill[1])
+
     cursor.close()
-    return Character(*output)
+    return character
 
 def get_characters_owned_by_user(user_id: int) -> Optional[list]:
     cursor = db.conn.cursor()
@@ -68,6 +78,23 @@ def get_characters_owned_by_user(user_id: int) -> Optional[list]:
     cursor.close()
     return list()
 
+def set_attribute(user_id: int, attribute_name: str, value: int) -> bool:
+    character = get_active_character_by_user_id(user_id)
+    if character is None:
+        raise CharacterException('Character not found.')
+
+    attribute = models.stats.get_attribute_by_name(attribute_name)
+
+    if attribute is None:
+        raise CharacterException('Invalid attribute name.')
+
+    cursor = db.conn.cursor()
+    cursor.execute(('INSERT INTO attribute(character_id, attribute_name, value) '
+                    'VALUES (?, ?, ?) ON CONFLICT (character_id, attribute_name) DO UPDATE SET value=?'),
+                    (character.db_id, attribute.name, value, value))
+    cursor.close()
+    db.conn.commit()
+
 def set_skill(user_id: int, skill_name: str, value: int) -> bool:
     character = get_active_character_by_user_id(user_id)
     if character is None:
@@ -77,9 +104,11 @@ def set_skill(user_id: int, skill_name: str, value: int) -> bool:
 
     if skill is None:
         raise CharacterException('Invalid skill name.')
-    
+
     cursor = db.conn.cursor()
-    cursor.execute('INSERT INTO skill(character_id, skill_name, value) VALUES (?, ?, ?) ON CONFLICT (character_id, skill_name) DO UPDATE SET value=?', (character.id, skill.name, value, value))
+    cursor.execute(('INSERT INTO skill(character_id, skill_name, value) '
+                    'VALUES (?, ?, ?) ON CONFLICT (character_id, skill_name) DO UPDATE SET value=?'),
+                    (character.db_id, skill.name, value, value))
     cursor.close()
     db.conn.commit()
 
@@ -96,7 +125,7 @@ def init_db():
     # Create tables if we need to
     cursor.execute('''CREATE TABLE IF NOT EXISTS character
                    (id INTEGER PRIMARY KEY, user_id, name, description, image_url, health, morale)''')
-    
+
     cursor.execute('''CREATE TABLE IF NOT EXISTS attribute
         (character_id,
         attribute_name,
@@ -107,7 +136,7 @@ def init_db():
             REFERENCES character (id)
             ON DELETE CASCADE
         )''')
-    
+
     cursor.execute('''CREATE TABLE IF NOT EXISTS skill
         (character_id,
         skill_name,

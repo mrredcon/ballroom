@@ -4,10 +4,10 @@ from models import stats
 from util.errors import CharacterException
 
 class Character:
-    def __init__(self, id, user_id, name, description, image_url, health, morale) -> None:
+    def __init__(self, db_id, user_id, name, description, image_url, health, morale) -> None:
         # cursor.execute('''CREATE TABLE IF NOT EXISTS character
         #            (id INTEGER PRIMARY KEY, user_id, name, description, image_url, health, morale)''')
-        self.id = id
+        self.db_id = db_id
         self.user_id = user_id
         self.name = name
         self.description = description
@@ -20,6 +20,9 @@ class Character:
     def get_skills_by_attribute(self, attribute: Attribute) -> dict:
         skills_of_attribute = stats.get_skills(attribute)
         return dict((k, self._skills[k]) for k in skills_of_attribute if k in self._skills)
+
+    def get_attribute(self, attribute: Attribute) -> int:
+        return self._attributes[attribute]
 
     def get_effective_skill(self, skill: Skill) -> int:
         matching_attribute = stats.get_attribute(skill)
