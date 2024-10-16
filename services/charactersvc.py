@@ -7,7 +7,7 @@ from util import db
 
 def db_activate_character(user_id: int, character_id: int) -> None:
     cursor = db.conn.cursor()
-    cursor.execute('SELECT COUNT(*) FROM active_character WHERE user_id = ?', (user_id))
+    cursor.execute('SELECT COUNT(*) FROM active_character WHERE user_id = ?', (user_id,))
     number_of_rows = cursor.fetchone()[0]
 
     if number_of_rows == 0:
@@ -17,17 +17,13 @@ def db_activate_character(user_id: int, character_id: int) -> None:
     db.conn.commit()
     cursor.close()
 
-def create_character(user_id: int, name: str) -> Character:
-    new_character = Character(name)
-
+def create_character(user_id: int, name: str) -> None:
     cursor = db.conn.cursor()
-    cursor.execute('INSERT INTO character (user_id, name) VALUES (?, ?)', (user_id, name))
+    cursor.execute('INSERT INTO character (user_id, name) VALUES (?, ?)', (user_id, name,))
     character_id = cursor.lastrowid
     cursor.close()
     db.conn.commit()
     db_activate_character(user_id, character_id)
-
-    return new_character
 
 def activate_character(user_id: int, name: str) -> bool:
     character_list = get_characters_owned_by_user(user_id)
@@ -47,25 +43,25 @@ def activate_character(user_id: int, name: str) -> bool:
 
 def find_character_by_name(character_name: str) -> Optional[Character]:
     cursor = db.conn.cursor()
-    cursor.execute('SELECT * FROM character WHERE name = ?', (character_name))
+    cursor.execute('SELECT * FROM character WHERE name = ?', (character_name,))
+    return Character('Unimplemented')
 
 def get_active_character_by_user_id(user_id: int) -> Optional[Character]:
     cursor = db.conn.cursor()
-    cursor.execute('SELECT character_id FROM active_character WHERE user_id = ?', (user_id))
+    cursor.execute('SELECT character_id FROM active_character WHERE user_id = ?', (user_id,))
     output = cursor.fetchone()
     if output is None:
         return None
-
-    cursor.execute('SELECT * FROM character WHERE id = ?', (output[0]))
-    output = cursor.fetchall()
-    for row in output:
-        print(row)
+    cursor.execute('SELECT id, user_id, name, description, image_url, health, morale FROM character WHERE id = ?', (output[0],))
+    output = cursor.fetchone()
+    #for row in output:
+    #    print(row)
     cursor.close()
-    return Character('Unimplemented')
+    return Character(*output)
 
 def get_characters_owned_by_user(user_id: int) -> Optional[list]:
     cursor = db.conn.cursor()
-    cursor.execute('SELECT * FROM character WHERE user_id = ?', (user_id))
+    cursor.execute('SELECT * FROM character WHERE user_id = ?', (user_id,))
     output = cursor.fetchall()
     for row in output:
         print(row)
@@ -81,8 +77,16 @@ def set_skill(user_id: int, skill_name: str, value: int) -> bool:
 
     if skill is None:
         raise CharacterException('Invalid skill name.')
+    
+    cursor = db.conn.cursor()
+    cursor.execute('INSERT INTO skill(character_id, skill_name, value) VALUES (?, ?, ?) ON CONFLICT (character_id, skill_name) DO UPDATE SET value=?', (character.id, skill.name, value, value))
+    cursor.close()
+    db.conn.commit()
 
-    character.set_skill(skill, value)
+# CREATE TABLE vocabulary(word TEXT PRIMARY KEY, count INT DEFAULT 1);
+# INSERT INTO vocabulary(word) VALUES('jovial')
+#   ON CONFLICT(word) DO UPDATE SET count=count+1;
+    #character.set_skill(skill, value)
     return True
 
 def init_db():
@@ -92,6 +96,28 @@ def init_db():
     # Create tables if we need to
     cursor.execute('''CREATE TABLE IF NOT EXISTS character
                    (id INTEGER PRIMARY KEY, user_id, name, description, image_url, health, morale)''')
+    
+    cursor.execute('''CREATE TABLE IF NOT EXISTS attribute
+        (character_id,
+        attribute_name,
+        value,
+        PRIMARY KEY (character_id, attribute_name)
+        CONSTRAINT fk_character
+            FOREIGN KEY (character_id)
+            REFERENCES character (id)
+            ON DELETE CASCADE
+        )''')
+    
+    cursor.execute('''CREATE TABLE IF NOT EXISTS skill
+        (character_id,
+        skill_name,
+        value,
+        PRIMARY KEY (character_id, skill_name)
+        CONSTRAINT fk_character
+            FOREIGN KEY (character_id)
+            REFERENCES character (id)
+            ON DELETE CASCADE
+        )''')
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS active_character
         (user_id INTEGER PRIMARY KEY,

@@ -55,14 +55,14 @@ _skills_to_attribute = {
 def get_attribute(skill: Skill):
     return _skills_to_attribute[skill]
 
-_attribute_pretty_names = {
+attribute_pretty_names = {
     Attribute.INTELLECT: "Intellect",
     Attribute.PSYCHE: "Psyche",
     Attribute.PHYSIQUE: "Physique",
     Attribute.MOTORICS: "Motorics"
 }
 
-_skill_pretty_names = {
+skill_pretty_names = {
     Skill.LOGIC: "Logic",
     Skill.ENCYCLOPEDIA: "Encyclopedia",
     Skill.RHETORIC: "Rhetoric",
@@ -93,13 +93,13 @@ _skill_pretty_names = {
 }
 
 def get_pretty_name(skill_or_attribute) -> str:
-    if skill_or_attribute is Attribute:
-        return _attribute_pretty_names[skill_or_attribute]
-    if skill_or_attribute is Skill:
-        return _skill_pretty_names[skill_or_attribute]
+    if isinstance(skill_or_attribute, Attribute):
+        return attribute_pretty_names[skill_or_attribute]
+    if isinstance(skill_or_attribute, Skill):
+        return skill_pretty_names[skill_or_attribute]
     raise StatException('Given parameter was not an Attribute or Skill.')
 
-_skill_aliases = {
+skill_aliases = {
     "encyc": Skill.ENCYCLOPEDIA,
     "ency": Skill.ENCYCLOPEDIA,
 
@@ -108,9 +108,11 @@ _skill_aliases = {
     "visual": Skill.VISUALCALCULUS,
     "calculus": Skill.VISUALCALCULUS,
     "calc": Skill.VISUALCALCULUS,
+    "Visual Calculus": Skill.VISUALCALCULUS,
 
     "inland": Skill.INLANDEMPIRE,
     "empire": Skill.INLANDEMPIRE,
+    "Inland Empire": Skill.INLANDEMPIRE,
 
     "empath": Skill.EMPATHY,
 
@@ -118,6 +120,7 @@ _skill_aliases = {
 
     "esprit": Skill.ESPRITDECORPS,
     "corps": Skill.ESPRITDECORPS,
+    "Esprit de Corps": Skill.ESPRITDECORPS,
 
     "suggest": Skill.SUGGESTION,
 
@@ -128,6 +131,7 @@ _skill_aliases = {
 
     "physical": Skill.PHYSICALINSTRUMENT,
     "instrument": Skill.PHYSICALINSTRUMENT,
+    "Physical Instrument": Skill.PHYSICALINSTRUMENT,
 
     "electro": Skill.ELECTROCHEMISTRY,
     "chemistry": Skill.ELECTROCHEMISTRY,
@@ -137,11 +141,13 @@ _skill_aliases = {
 
     "half": Skill.HALFLIGHT,
     "light": Skill.HALFLIGHT,
+    "Half Light": Skill.HALFLIGHT,
 
     "coord": Skill.HANDEYECOORDINATION,
     "coordination": Skill.HANDEYECOORDINATION,
     "hand": Skill.HANDEYECOORDINATION,
     "handeye": Skill.HANDEYECOORDINATION,
+    "Hand/Eye Coordination": Skill.HANDEYECOORDINATION,
 
     "percept": Skill.PERCEPTION,
     "perceive": Skill.PERCEPTION,
@@ -150,9 +156,11 @@ _skill_aliases = {
     "react": Skill.REACTIONSPEED,
     "reaction": Skill.REACTIONSPEED,
     "speed": Skill.REACTIONSPEED,
+    "Reaction Speed": Skill.REACTIONSPEED,
 
     "savoir": Skill.SAVOIRFAIRE,
     "faire": Skill.SAVOIRFAIRE,
+    "Savoir Faire": Skill.SAVOIRFAIRE,
 
     "interface": Skill.INTERFACING,
     "inter": Skill.INTERFACING,
@@ -164,7 +172,7 @@ def get_skill_by_name(query: str) -> Optional[Skill]:
     match = None
 
     # check aliases first
-    for alias, skill in _skill_aliases.items():
+    for alias, skill in skill_aliases.items():
         if alias.casefold() == query.casefold():
             return skill
 

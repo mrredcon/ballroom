@@ -58,18 +58,17 @@ class CharacterCog(commands.GroupCog, name='character', description='Character c
         await interaction.response.send_message(f"Here's the sheet for {matching_character.name}.",
                                                 embed=self.format_sheet(interaction.user, matching_character))
 
-    def get_skills_sheet_by_attribute(self, character: Character, attribute_name: str) -> str:
+    def get_skills_sheet_by_attribute(self, character: Character, attribute: Attribute) -> str:
         result = ''
-        attribute = models.stats.get_attribute_by_name(attribute_name)
         for skill in models.stats.get_skills(attribute):
-            result += f"{skill.get_pretty_name()}: {character.get_effective_skill(skill)}\n"
+            result += f"{models.stats.get_pretty_name(skill)}: {character.get_effective_skill(skill)}\n"
         return result
 
     def format_sheet(self, member: discord.Member, character: Character) -> discord.Embed:
         embed = discord.Embed(title=character.name, description=character.description, color=member.color)
 
         for attribute in Attribute.__members__.values():
-            embed.add_field(name=attribute, value=self.get_skills_sheet_by_attribute(character, attribute))
+            embed.add_field(name=models.stats.get_pretty_name(attribute), value=self.get_skills_sheet_by_attribute(character, attribute))
 
         return embed
 
@@ -115,5 +114,6 @@ class CharacterCog(commands.GroupCog, name='character', description='Character c
 
     @set_skill.autocomplete("skill_name")
     async def skill_name_autocomplete(self, _: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        options = Skill.__members__.keys()
+        #options = Skill.__members__.keys()
+        options = models.stats.skill_pretty_names.values()
         return [app_commands.Choice(name=option, value=option) for option in options if option.casefold().startswith(current.casefold())][:25]
