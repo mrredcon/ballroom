@@ -1,25 +1,22 @@
 from models.attribute import Attribute
-from models.item import Item
 from models.skill import Skill
 from models import stats
-from models.slot import Slot
 from util.errors import CharacterException
 
-class Character:
-    def __init__(self, db_id, user_id, name, description, image_url, health, morale) -> None:
-        # cursor.execute('''CREATE TABLE IF NOT EXISTS character
-        #            (id INTEGER PRIMARY KEY, user_id, name, description, image_url, health, morale)''')
+class Item:
+    def __init__(self, db_id, user_id, name, description, image_url, slot, item_type, duration) -> None:
+        # cursor.execute('''CREATE TABLE IF NOT EXISTS item
+        #            (id INTEGER PRIMARY KEY, user_id, name, description, image_url, slot, type, duration)''')
         self.db_id = db_id
         self.user_id = user_id
         self.name = name
         self.description = description
         self.image_url = image_url
-        self.health = health
-        self.morale = morale
+        self.slot = slot
+        self.item_type = item_type
+        self.duration = duration
         self._attributes = { x:0 for x in Attribute.__members__.values() }
         self._skills = { x:0 for x in Skill.__members__.values() }
-        self._equipped_items = { x:None for x in Slot.__members__.values() }
-        self._inventory = {}
 
     def get_skills_by_attribute(self, attribute: Attribute) -> dict:
         skills_of_attribute = stats.get_skills(attribute)
@@ -42,7 +39,3 @@ class Character:
         if value < 0:
             raise CharacterException('Skill value cannot be less than 0.')
         self._skills[skill] = value
-
-    def equip_item(self, item: Item):
-        slot = Slot[item.slot.upper()]
-        self._equipped_items[slot] = item

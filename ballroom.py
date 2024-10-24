@@ -11,6 +11,7 @@ bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
 async def on_ready():
     await bot.load_extension(name='cogs.charactercmds')
     await bot.load_extension(name='cogs.rollcmds')
+    await bot.load_extension(name='cogs.itemcmds')
 
     await bot.tree.sync()
     print(f'We have logged in as {bot.user}')

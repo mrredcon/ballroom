@@ -3,3 +3,9 @@ class CharacterException(Exception):
 
 class StatException(Exception):
     pass
+
+class ItemException(Exception):
+    pass
+
+class PermissionException(Exception):
+    pass
