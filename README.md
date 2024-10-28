@@ -28,12 +28,13 @@ macOS/Linux: `source venv/bin/activate`
 All Platforms: `pip install -r requirements.txt`
 
 # Setup
-
 ## Create a bot account
 Use this link to create a bot account: https://discord.com/developers/applications
 
 Copy the token
 
+# Usage
+## Run the app (don't forget to activate the virtualenv first!)
 Windows: `BALLROOM_TOKEN="token_goes_here" py ballroom.py`
 
 macOS/Linux: `BALLROOM_TOKEN="token_goes_here" ./ballroom.py`

@@ -95,7 +95,7 @@ def init_db():
 
     # Create tables if we need to
     cursor.execute('''CREATE TABLE IF NOT EXISTS item
-                   (id INTEGER PRIMARY KEY, user_id, name, description, image_url, slot, item_type, duration)''')
+                   (id INTEGER PRIMARY KEY, user_id, name UNIQUE, description, image_url, slot, item_type, duration)''')
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS item_stat
         (item_id,

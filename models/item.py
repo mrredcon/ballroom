@@ -15,25 +15,17 @@ class Item:
         self.slot = slot
         self.item_type = item_type
         self.duration = duration
-        self._attributes = { x:0 for x in Attribute.__members__.values() }
-        self._skills = { x:0 for x in Skill.__members__.values() }
+        self._effects = dict()
+        # self._attributes = { x:0 for x in Attribute.__members__.values() }
+        # self._skills = { x:0 for x in Skill.__members__.values() }
 
-    def get_skills_by_attribute(self, attribute: Attribute) -> dict:
-        skills_of_attribute = stats.get_skills(attribute)
-        return dict((k, self._skills[k]) for k in skills_of_attribute if k in self._skills)
-
-    def get_attribute(self, attribute: Attribute) -> int:
-        return self._attributes[attribute]
-
-    def get_effective_skill(self, skill: Skill) -> int:
-        matching_attribute = stats.get_attribute(skill)
-        attribute_value = self._attributes[matching_attribute]
-        return attribute_value + self._skills[skill]
+    def get_effects(self) -> dict:
+        return self._effects
 
     def set_attribute(self, attribute: Attribute, value: int) -> None:
         if value < 0:
             raise CharacterException('Attribute value cannot be less than 0.')
-        self._attributes[attribute] = value
+        self._effects[attribute] = value
 
     def set_skill(self, skill: Skill, value: int) -> None:
         if value < 0:
