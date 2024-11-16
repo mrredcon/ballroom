@@ -1,33 +1,33 @@
-from models.attribute import Attribute
-from models.skill import Skill
-from models import stats
-from util.errors import CharacterException
+from dataclasses import dataclass, field
+from typing import Optional
 
+from models.item_type import ItemType
+from models.itemstat import ItemStat
+from models.slot import Slot
+
+@dataclass
 class Item:
-    def __init__(self, db_id, user_id, name, description, image_url, slot, item_type, duration) -> None:
-        # cursor.execute('''CREATE TABLE IF NOT EXISTS item
-        #            (id INTEGER PRIMARY KEY, user_id, name, description, image_url, slot, type, duration)''')
-        self.db_id = db_id
-        self.user_id = user_id
-        self.name = name
-        self.description = description
-        self.image_url = image_url
-        self.slot = slot
-        self.item_type = item_type
-        self.duration = duration
-        self._effects = dict()
-        # self._attributes = { x:0 for x in Attribute.__members__.values() }
-        # self._skills = { x:0 for x in Skill.__members__.values() }
+    db_id: int
+    user_id: int
+    name: str
+    description: str
+    image_url: str
+    slot: Slot
+    item_type: ItemType
+    duration: int
+    effects: list[ItemStat] = field(default_factory=list)
 
-    def get_effects(self) -> dict:
-        return self._effects
+def construct_item(db_item) -> Optional[Item]:
+    if db_item is None:
+        return None
 
-    def set_attribute(self, attribute: Attribute, value: int) -> None:
-        if value < 0:
-            raise CharacterException('Attribute value cannot be less than 0.')
-        self._effects[attribute] = value
+    # Convert from Tuple into list so we can mess with it
+    db_item = list(db_item)
 
-    def set_skill(self, skill: Skill, value: int) -> None:
-        if value < 0:
-            raise CharacterException('Skill value cannot be less than 0.')
-        self._skills[skill] = value
+    if db_item[5] is not None:
+        db_item[5] = Slot[db_item[5]]
+
+    if db_item[6] is not None:
+        db_item[6] = ItemType[db_item[6]]
+
+    return Item(*db_item)

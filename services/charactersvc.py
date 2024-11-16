@@ -73,10 +73,11 @@ def get_characters_owned_by_user(user_id: int) -> Optional[list]:
     cursor = db.conn.cursor()
     cursor.execute('SELECT * FROM character WHERE user_id = ?', (user_id,))
     output = cursor.fetchall()
+    characters = []
     for row in output:
-        print(row)
+        characters.append(Character(*row))
     cursor.close()
-    return list()
+    return characters
 
 def set_attribute(user_id: int, attribute_name: str, value: int) -> bool:
     character = get_active_character_by_user_id(user_id)
@@ -111,11 +112,6 @@ def set_skill(user_id: int, skill_name: str, value: int) -> bool:
                     (character.db_id, skill.name, value, value))
     cursor.close()
     db.conn.commit()
-
-# CREATE TABLE vocabulary(word TEXT PRIMARY KEY, count INT DEFAULT 1);
-# INSERT INTO vocabulary(word) VALUES('jovial')
-#   ON CONFLICT(word) DO UPDATE SET count=count+1;
-    #character.set_skill(skill, value)
     return True
 
 def init_db():
